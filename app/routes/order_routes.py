@@ -1,9 +1,7 @@
-from fastapi import APIRouter
 from fastapi import APIRouter, BackgroundTasks
 from app.models.model import OrderRequest
-from app.database import orders_collection
+from app.database import orders_collection, vouchers_collection
 from app.services.vendor_service import vendor_amazon, vendor_flipkart, vendor_default
-from app.database import vouchers_collection
 from datetime import datetime
 import time
 import uuid
@@ -123,4 +121,13 @@ def get_order(order_id: str):
     return {
         "order": order,
         "vouchers": voucher_codes
+    }
+
+@router.get("/orders")
+def get_all_orders():
+    orders = list(orders_collection.find({}, {"_id": 0}))
+    
+    return {
+        "total_orders": len(orders),
+        "orders": orders
     }
