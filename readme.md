@@ -1,20 +1,19 @@
+🚀 Mini LVS (Live Voucher System)## 
 
-# 🚀 Mini LVS (Live Voucher System)
+📌 Overview : This project is a **mini Live Voucher System (LVS)** built using **FastAPI**, **Redis**, **Celery**, and **MongoDB**.It simulates how an ERP system processes voucher orders asynchronously using a **queue-based architecture**.
 
-## 📌 Overview
-This project is a **mini Live Voucher System (LVS)** built using **FastAPI** and **MongoDB (mongomock)**.
-
-It simulates how an ERP system processes **E‑voucher orders**, integrates with external vendors, and delivers vouchers to customers.
-
----
-
-## 🧠 System Flow
-
-```
-
-ERP (API Request) → LVS → Vendor → LVS → Database → ERP (Status Check)
-
-```
+---## 🧠 System Architecture
+Client
+↓
+FastAPI (API layer)
+↓
+Celery (Task Producer)
+↓
+Redis (Message Queue / Broker)
+↓
+Celery Worker (Task Executor)
+↓
+MongoDB (Persistent Storage)
 
 ---
 
@@ -23,54 +22,72 @@ ERP (API Request) → LVS → Vendor → LVS → Database → ERP (Status Check)
 ### ✅ Order Management
 - Create voucher orders via API
 - Generates unique `order_id`
-- Stores order details in database
+- Stores order with initial status `IN_PROGRESS`
 
-### ✅ Vendor Integration (Simulation)
-- Simulates external vendor APIs
-- Generates voucher codes dynamically
-- Supports multiple vendors (Amazon, Flipkart)
+---
 
 ### ✅ Asynchronous Processing
-- Uses FastAPI BackgroundTasks
-- Order processing happens in background
-- API responds immediately
+- Uses **Celery** for background task execution
+- API responds immediately without waiting
+- Order processing happens via worker
+
+---
+
+### ✅ Redis Queue Integration
+- Redis acts as message broker
+- Tasks are queued and processed asynchronously
+- Supports scalable worker-based processing
+
+---
+
+### ✅ Celery Worker System
+- Separate worker process executes background tasks
+- Handles vendor integration and voucher generation
+- Supports retry logic for failures
+
+---
+
+### ✅ MongoDB Integration
+- Stores:
+  - Orders
+  - Voucher codes
+  - Order status
+- Shared across FastAPI and Celery worker
+
+---
 
 ### ✅ Retry Mechanism
-- Retries vendor call up to 3 times
-- Handles temporary failures
-- Improves reliability
+- Retries vendor calls up to 3 times
+- Handles temporary failures gracefully
+
+---
 
 ### ✅ Idempotency
-- Prevents duplicate order processing
-- Uses `idempotency_key`
-- Same request → same response
+- Prevents duplicate order creation
+- Uses `idempotency_key` to ensure safe retries
+
+---
 
 ### ✅ Multi-Vendor Routing
-- Routes requests based on product type:
-  - `amazon_voucher` → Amazon Vendor
-  - `flipkart_voucher` → Flipkart Vendor
+- Supports multiple vendors:
+  - Amazon
+  - Flipkart
+- Routes request based on product type
 
-### ✅ Order Tracking
-- Fetch order details using:
-```
+---
 
-GET /orders/{order\_id}
+### ✅ Order Tracking API
+- Fetch order and voucher details:
 
-```
-- Returns:
-- Order status
-- Voucher codes (if available)
+GET /orders/{order_id}
 
 ---
 
 ## 📡 API Endpoints
 
 ### 🔹 Create Order
-```
 
 POST /orders
-
-````
 
 **Request Body:**
 ```json
@@ -80,105 +97,88 @@ POST /orders
   "quantity": 2,
   "idempotency_key": "test123"
 }
-````
 
-***
 
-### 🔹 Get Order Status
-
-```
+🔹 Get Order Status
 GET /orders/{order_id}
-```
 
-***
 
-## 🗄️ Tech Stack
+🔹 Get All Orders
+GET /orders
 
-* **Backend:** FastAPI
-* **Database:** MongoDB (mongomock for local testing)
-* **Containerization:** Docker
-* **Language:** Python 3.12
 
-***
+🔁 Workflow
 
-## 🐳 Docker Setup
+Client sends order request
+FastAPI creates order (IN_PROGRESS)
+Celery sends task to Redis queue
+Worker picks task from Redis
+Worker processes order (vendor call)
+MongoDB updated (DELIVERED / FAILED)
+Client fetches result via GET API
 
-### Build Image
 
-```bash
-docker build -t mini-lvs .
-```
+⚡ Tech Stack
 
-### Run Container
+Backend: FastAPI
+Queue / Broker: Redis
+Task Worker: Celery
+Database: MongoDB
+Containerization: Docker
+Language: Python 3.12
 
-```bash
-docker run -p 8000:8000 mini-lvs
-```
 
-### Access API Docs
+🧠 Key Concepts Demonstrated
 
-```
-http://localhost:8000/docs
-```
+Asynchronous processing
+Queue-based architecture
+Producer-Consumer model
+Eventual consistency
+Retry mechanisms
+Idempotency
+Distributed systems design
 
-***
 
-## 🛠️ Local Setup
+🛠️ Local Setup
+1. Activate Virtual Environment
+Shellpython3 -m venv venvsource venv/bin/activate``Show more lines
 
-### 1. Create Virtual Environment
+2. Install Dependencies
+Shellpip install -r requirements.txtShow more lines
 
-```bash
-python3 -m venv venv
-source venv/bin/activate
-```
+3. Start Redis
+Shellredis-serverShow more lines
 
-### 2. Install Dependencies
+4. Start MongoDB (Docker)
+Shelldocker run -d -p 27017:27017 mongoShow more lines
 
-```bash
-pip install -r requirements.txt
-```
+5. Start Celery Worker
+Shellpython -m celery -A app.celery_worker worker --loglevel=info``Show more lines
 
-### 3. Run Server
+6. Start FastAPI
+Shelluvicorn app.main:app --reload --port 8001Show more lines
 
-```bash
-uvicorn app.main:app --reload --port 8001
-```
+7. Access API
+http://localhost:8001/docs
 
-***
 
-## 🧠 Key Concepts Learned
-
-* API design with FastAPI
-* Asynchronous processing
-* Retry mechanisms
-* Idempotency in backend systems
-* Vendor abstraction and routing
-* NoSQL data modeling
-* Docker containerization
-
-***
-
-## ✅ Project Capability
-
+✅ Final Capability
 This system can:
+✅ Handle asynchronous order processing
+✅ Process tasks via Redis queue
+✅ Execute background jobs using Celery
+✅ Store and retrieve data from MongoDB
+✅ Handle retries and failures
+✅ Scale using worker-based architecture
 
-* Accept voucher orders
-* Process orders asynchronously
-* Integrate with multiple vendors
-* Handle vendor failures with retry logic
-* Prevent duplicate requests
-* Provide order status and voucher tracking
+📌 Summary
+This project demonstrates a production-style backend system using:
 
-***
+FastAPI for APIs
+Redis for queueing
+Celery for background processing
+MongoDB for persistent storage
 
-## 📌 Summary
 
-This project simulates a **production-like LVS backend system**, covering real-world concepts such as async workflows, vendor integration, retry handling, and scalable API design.
-
-***
-
-## 👨‍💻 Author
-
+👨‍💻 Author
 Madhusudhan M
-
----
