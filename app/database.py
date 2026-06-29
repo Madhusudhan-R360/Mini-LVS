@@ -1,11 +1,11 @@
-import mongomock
+from pymongo import MongoClient
 
-# Create a mock MongoDB client
-client = mongomock.MongoClient()
+# ✅ Connect to real MongoDB (running in Docker)
+client = MongoClient("mongodb://localhost:27017")
 
-# Create database
+# ✅ Database
 db = client["lvs_db"]
 
-# Collections
+# ✅ Collections
 orders_collection = db["orders"]
 vouchers_collection = db["vouchers"]

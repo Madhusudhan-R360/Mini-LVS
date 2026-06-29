@@ -5,6 +5,7 @@ from app.services.vendor_service import vendor_amazon, vendor_flipkart, vendor_d
 from datetime import datetime
 import time
 import uuid
+from app.tasks import process_order_task
 
 router = APIRouter()
 
@@ -86,11 +87,10 @@ def create_order(order: OrderRequest, background_tasks: BackgroundTasks):
 
     orders_collection.insert_one(order_data)
 
-    # Background processing
-    background_tasks.add_task(
-        process_order_background,
+    process_order_task.delay(
         order_id,
-        order.quantity
+        order.quantity,
+        order.product
     )
 
     return {
