@@ -60,9 +60,11 @@ def process_order_task(self, order_id, quantity, product):
         )
             return
 
-        logger.error(f"Retrying order {order_id}: {str(e)}")
+        delay = 2 ** self.request.retries
+
+        logger.error(f"Retrying order {order_id} in {delay} seconds")
 
         raise self.retry(
         exc=e,
-        countdown=2
+        countdown=delay
     )
