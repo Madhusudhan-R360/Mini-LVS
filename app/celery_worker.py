@@ -6,5 +6,10 @@ celery_app = Celery(
     backend="redis://localhost:6379/0"
 )
 
-# ✅ VERY IMPORTANT - register tasks
 celery_app.conf.imports = ("app.tasks",)
+
+# ✅ Reliability improvement
+celery_app.conf.task_acks_late = True
+
+# ✅ Better task distribution
+celery_app.conf.worker_prefetch_multiplier = 1
