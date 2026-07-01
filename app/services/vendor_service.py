@@ -2,7 +2,7 @@ import random
 import string
 
 def vendor_amazon(quantity: int):
-    success = random.choice([True, True, True, False])
+    success = random.choice([True, True, False])
 
     if not success:
         return {"status": "FAILED", "vouchers": []}
@@ -16,7 +16,7 @@ def vendor_amazon(quantity: int):
 
 
 def vendor_flipkart(quantity: int):
-    success = random.choice([True, True, True, False])
+    success = random.choice([True, True, False])
 
     if not success:
         return {"status": "FAILED", "vouchers": []}
