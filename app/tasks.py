@@ -4,7 +4,11 @@ from app.services.vendor_service import vendor_amazon, vendor_flipkart
 from app.logger import logger
 
 
-@celery_app.task(bind=True, max_retries=3)
+@celery_app.task(
+    bind=True,
+    max_retries=3,
+    queue="orders_queue"
+)
 def process_order_task(self, order_id, quantity, product):
 
     logger.info(f"Starting processing for order {order_id}")
