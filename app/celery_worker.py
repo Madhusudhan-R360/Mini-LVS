@@ -13,3 +13,9 @@ celery_app.conf.task_acks_late = True
 
 # ✅ Better task distribution
 celery_app.conf.worker_prefetch_multiplier = 1
+
+celery_app.conf.task_routes = {
+    "app.tasks.process_order_task": {
+        "queue": "orders_queue"
+    }
+}
