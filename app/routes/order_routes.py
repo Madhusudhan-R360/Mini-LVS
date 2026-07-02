@@ -92,11 +92,15 @@ def create_order(order: OrderRequest, background_tasks: BackgroundTasks):
         order.quantity,
         order.product
     )
+    orders_collection.update_one(
+    {"order_id": order_id},
+    {"$set": {"status": "QUEUED"}}
+)
 
     return {
         "message": "Order created successfully",
         "order_id": order_id,
-        "status": "IN_PROGRESS"
+        "status": "CREATED"
     }
 
 @router.get("/orders/{order_id}")
