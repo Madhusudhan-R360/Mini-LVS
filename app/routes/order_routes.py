@@ -1,9 +1,11 @@
 from fastapi import APIRouter, BackgroundTasks
 from app.models.model import OrderRequest
-from app.database import orders_collection, vouchers_collection
+from app.database import orders_collection, vouchers_collection, redis_client
 from app.services.vendor_service import vendor_amazon, vendor_flipkart, vendor_default
+from app.logger import logger
 from datetime import datetime
 import time
+import json
 import uuid
 from app.tasks import process_order_task
 
@@ -105,6 +107,11 @@ def create_order(order: OrderRequest, background_tasks: BackgroundTasks):
 
 @router.get("/orders/{order_id}")
 def get_order(order_id: str):
+    cached_order = redis_client.get(order_id)
+    if cached_order:
+        logger.info(f"Cache HIT for order {order_id}")
+        return json.loads(cached_order)
+    logger.info(f"Cache MISS for order {order_id}")
     # Find order
     order = orders_collection.find_one({"order_id": order_id}, {"_id": 0})
 
@@ -122,10 +129,18 @@ def get_order(order_id: str):
     # Extract only voucher codes
     voucher_codes = [v["voucher_code"] for v in vouchers]
 
-    return {
-        "order": order,
-        "vouchers": voucher_codes
-    }
+    response = {
+    "order": order,
+    "vouchers": voucher_codes
+}
+
+
+    redis_client.set(
+    order_id,
+    json.dumps(response, default=str)
+)
+
+    return response
 
 @router.get("/orders")
 def get_all_orders():
