@@ -8,6 +8,10 @@ from app.logger import logger
 def process_order_task(self, order_id, quantity, product):
 
     logger.info(f"Starting processing for order {order_id}")
+    orders_collection.update_one(
+    {"order_id": order_id},
+    {"$set": {"status": "PROCESSING"}}
+)
 
     # ✅ Vendor selection
     if product == "amazon_voucher":
